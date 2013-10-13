@@ -1,8 +1,9 @@
 **************************************************
-*-- Class:        memconf (\\keenetic\disk_a1\flash\exptransfer-xml\memconfig.vcx)
+*-- Class:        memconf 
 *-- ParentClass:  custom
 *-- BaseClass:    custom
-*-- Time Stamp:   10/13/13 11:44:09 AM
+*-- Time Stamp:   10/13/13 02:50:04 PM
+*-- Класс для сохраненеия и извлечения значений переменных в таблицу Config по подобию функции MEMOFILE", поддерживает массивы
 *
 DEFINE CLASS memconf AS custom
 
@@ -74,11 +75,11 @@ DEFINE CLASS memconf AS custom
 			retu 
 		ENDIF 
 
-		LOCAL oVar as MSXML2.IXMLDOMElement 
+		LOCAL oVar as MSXML2.IXMLDOMElement, oItem as MSXML2.IXMLDOMElement 
 
 
 		this.domdocument.loadXML(cVal)
-		local I, cVar
+		local I, cVar, cTmp, J, K
 
 		LOCAL oList as MSXML2.IXMLDOMNodeList
 
@@ -89,8 +90,30 @@ DEFINE CLASS memconf AS custom
 		ENDIF 
 		FOR i = 0 TO oList.length-1
 			oVar = oList.item(i)
-			cVar = ovar.getAttribute('name')
-			&cVar = this.gettypedval(oVar.getAttribute('type'), oVar.nodeTypedValue)
+			IF oVar.getAttribute('type') == 'A'
+				cTmp = cName + '[' + oVar.getAttribute('rows')
+				IF !ISNULL(oVar.getAttribute('columns'))
+					cTmp = cTmp + ', ' + oVar.getAttribute('columns')
+				ENDIF 
+				cTmp = 'DIMENSION ' + cTmp + ']'
+				&cTmp
+				FOR J = 1 TO VAL(oVar.getAttribute('rows'))
+					IF ISNULL(oVar.getAttribute('columns'))
+						cTmp = cName + '[' + ALLTRIM(STR(J)) + ']'
+						oItem = oVar.selectSingleNode('//item[@row="'+ALLTRIM(STR(J))+'"]')
+						&cTmp = this.gettypedval(oItem.getAttribute('type'), oItem.nodeTypedValue)
+					ELSE
+						FOR K = 1 TO VAL(oVar.getAttribute('columns'))
+							cTmp = cName + '[' + ALLTRIM(STR(J)) + ', ' + ALLTRIM(STR(K)) + ']'
+							oItem = oVar.selectSingleNode('//item[@row="'+ALLTRIM(STR(J))+'" and @column="'+ALLTRIM(STR(K))+'"]')
+							&cTmp = this.gettypedval(oItem.getAttribute('type'), oItem.nodeTypedValue)
+						NEXT 
+					ENDIF 
+				NEXT 
+			ELSE
+				cVar = ovar.getAttribute('name')
+				&cVar = this.gettypedval(oVar.getAttribute('type'), oVar.nodeTypedValue)
+			ENDIF 
 		NEXT 
 	ENDPROC
 
